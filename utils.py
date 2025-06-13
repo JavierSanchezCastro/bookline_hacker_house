@@ -52,7 +52,11 @@ class ProductShow(BaseModel):
     name: Annotated[str, Translatable]
     description: Annotated[str, Translatable]
     model_config = ConfigDict(from_attributes=True) 
-    name_original_text: str
+
+class ProductShow2(BaseModel):
+    name: str
+    description: str
+    model_config = ConfigDict(from_attributes=True) 
 
     #@field_validator("name", mode="before")
     #@classmethod

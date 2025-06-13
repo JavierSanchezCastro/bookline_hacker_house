@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Products, TextContent, Languages, Translations, Base
-from utils import ProductShow
+from utils import ProductShow, ProductShow2
 
 # Configuración de la base de datos
 SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:1234@localhost:3307/test"
@@ -80,7 +80,7 @@ from pydantic import root_validator
     #    description = get_text_i18(db, product.description_id, language)  # Traducción de la descripción
     #    return cls(id=product.id, name=name, description=description)
 
-@app.get("/product/{product_id}", response_model=ProductShow)
+@app.get("/product/{product_id}", response_model=ProductShow2)
 def get_product_by_id(product_id: int, language: Optional[str] = None, db: Session = Depends(get_db)):
     # Obtener el producto por ID
     product = db.query(Products).filter(Products.id == product_id).first()
@@ -88,45 +88,5 @@ def get_product_by_id(product_id: int, language: Optional[str] = None, db: Sessi
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    #return product.name(language)
+    return product.get_translated("Spanish")
     
-    #return product
-    #print(f"{product=}")
-    #print(f"{product.__dict__=}")
-    pyd = ProductShow.model_validate(product, context={"lang": language})
-    print(f"{pyd=}")
-    #print(product)
-    #print(product.__dict__)
-    #print(product.name_rel.original_text)
-    #print(product.iterate_attributes())
-    #print("----")
-    #print(product.iterate_functions())
-    print("========")
-    print(product.get_translated())
-    #print(product.get_description_id())
-    #product.get_translated_object("s")
-    return pyd
-    #return pyd.model_dump(context={"lang": language})
-    return product
-
-    # Crear la respuesta usando el modelo ProductShow y obtener las traducciones
-    return ProductShow.from_orm(product=product, db=db, language=language)
-
-
-## Endpoint para obtener el producto por id
-#@app.get("/product/{product_id}")
-#def get_product_by_id(product_id: int, language: Optional[str] = None, db: Session = Depends(get_db)):
-#    # Obtener el producto por ID
-#    product = db.query(Products).filter(Products.id == product_id).first()
-#
-#
-#    if product is None:
-#        raise HTTPException(status_code=404, detail="Product not found")
-#    
-#    # Obtener el nombre y la descripción traducidos o originales
-#    product_name = get_text_i18(db, product.name_id, language) if language else product.name.original_text
-#    product_description = get_text_i18(db, product.description_id, language) if language else product.description.original_text
-#    
-#    return {"id": product.id, "name": product_name, "description": product_description}
-#    return ProductResponse(id=product.id, name=product_name, description=product_description)
-#
