@@ -93,131 +93,33 @@ class AutoRelationshipMeta(DeclarativeMeta):
                         base_name,
                         make_translator(rel_name)
                     )
+    
+    def __new__(cls, name, bases, dct):
+        # Añadir la función 'iterate_attributes' a las clases que heredan de 'Base'
+        def iterate_attributes(self):
+            atts = {}
+            for attribute, value in vars(self).items():
+                print(f"Attribute: {attribute} - Value: {value}")
+                atts[attribute] = value
+            
+            return atts
+        
+        def iterate_functions(self):
+            # Obtener todos los métodos de la clase
+            functions = inspect.getmembers(cls, predicate=inspect.isfunction)
+            for function_name, function in functions:
+                print(f"Function: {function_name}, Function object: {function}")
 
-            #if not hasattr(cls, "get_translated_object"):
-            #    def get_translated_object(cls, lang: str):
-            #        all_att = {}
-            #        for attribute, value in vars(cls).items():
-            #            print(f"{attribute}: {value}")
-#
-            #        print(f"{all_att=}")
-            #        return all_att
-#
-            #    setattr(
-            #        cls,
-            #        "get_translated_object",
-            #        classmethod(get_translated_object)
-            #    )
-        def __new__(cls, name, bases, dct):
-            # Función que obtiene la traducción de las columnas relacionadas con TextContent
-            def get_translated(self, lang: str = "Spanish"):
-                translated_attributes = {}
-
-                # Iterar sobre las columnas de la clase
-                for col in cls.__table__.columns:
-                    # Si la columna es un ForeignKey que apunta a TextContent
-                    if col.name.endswith('_id') and col.foreign_keys:
-                        fk = next(iter(col.foreign_keys))
-                        target_table = fk.column.table.name
-                        if target_table == 'text_content':
-                            base_name = col.name[:-3]  # Ejemplo: 'name_id' → 'name'
-                            translated_attributes[base_name] = getattr(self, base_name)(lang)
-                        else:
-                            translated_attributes[col.name] = getattr(self, col.name)
-                    else:
-                        # Si no es una columna relacionada con TextContent, devolver el valor normal
-                        translated_attributes[col.name] = getattr(self, col.name)
-
-                return translated_attributes
-
-            dct['get_translated'] = get_translated
-            return super().__new__(cls, name, bases, dct)
-    #
-    #def __new__(cls, name, bases, dct):
-    #    # Añadir la función 'iterate_attributes' a las clases que heredan de 'Base'
-    #    def iterate_attributes(self):
-    #        atts = {}
-    #        for attribute, value in vars(self).items():
-    #            print(f"Attribute: {attribute} - Value: {value}")
-    #            atts[attribute] = value
-    #        
-    #        return atts
-    #    
-    #    def iterate_functions(self):
-    #        # Obtener todos los métodos de la clase
-    #        functions = inspect.getmembers(cls, predicate=inspect.isfunction)
-    #        for function_name, function in functions:
-    #            print(f"Function: {function_name}, Function object: {function}")
-#
-    #    def get_translated(self, lang: str = "Spanish"):
-    #            translated_attributes = {}
-#
-    #            for col in cls.__table__.columns:
-    #                # Si es una columna relacionada con TextContent
-    #                if col.name.endswith('_id') and col.foreign_keys:
-    #                    fk = next(iter(col.foreign_keys))
-    #                    target_table = fk.column.table.name
-    #                    if target_table == 'text_content':
-    #                        base_name = col.name[:-3]  # Por ejemplo, 'name_id' → 'name'
-    #                        translated_attributes[base_name] = getattr(self, base_name)(lang)
-    #                    else:
-    #                        translated_attributes[col.name] = getattr(self, col.name)
-    #                else:
-    #                    # Si no es una columna relacionada con TextContent, devolver el valor normal
-    #                    translated_attributes[col.name] = getattr(self, col.name)
-#
-    #            return translated_attributes
-#
-    #    dct['iterate_attributes'] = iterate_attributes
-    #    dct['iterate_functions'] = iterate_functions
-    #    dct['get_translated'] = get_translated
+        dct['iterate_attributes'] = iterate_attributes
+        dct['iterate_functions'] = iterate_functions
 
         
-        # Crear la clase de manera estándar
-        #return super().__new__(cls, name, bases, dct)
+        return super().__new__(cls, name, bases, dct)
+
 # Base con el metaclase personalizado
 Base = declarative_base(metaclass=AutoRelationshipMeta)
 from sqlalchemy.orm import Session, class_mapper
 from sqlalchemy.orm import relationship
-
-class TranslatableModel:
-    """Clase base para manejar traducciones de modelos con claves foráneas a TextContent."""
-    
-    def translate_field(self, db: Session, field_name: str, language: str):
-        """Obtiene la traducción de un campo que es una clave foránea a TextContent."""
-        # Obtener el valor de la relación
-        field_value = getattr(self, field_name)
-
-        print(f"{field_value=}")
-        
-        # Asegurarse de que el campo sea una relación a TextContent
-        if not field_value:
-            return None
-        
-        # Buscar la traducción del campo en el idioma solicitado
-        translation = db.query(Translations).join(Languages).filter(
-            Translations.text_content_id == field_value.id,
-            Languages.name == language
-        ).first()
-
-        # Si se encuentra la traducción, se devuelve
-        if translation:
-            return translation.translation
-        else:
-            # Si no se encuentra la traducción, se devuelve el texto original
-            return field_value.original_text if field_value else None
-
-    def translate(self, db: Session, language: str):
-        """Traduce todos los campos del modelo que son claves foráneas a TextContent."""
-        for column in class_mapper(self.__class__).columns:
-            if isinstance(column.type, Integer):  # Solo consideramos columnas de FK
-                # Si la columna es una relación con TextContent, traducirla
-                if column.name.endswith('_id'):
-                    print(f"Column: {column.name}")
-                    field_name = column.name.replace('_id', '')  # Obtener el nombre del campo
-                    translated_value = self.translate_field(db, field_name, language)
-                    print(f"{translated_value=}")
-                    setattr(self, f"{field_name}_", translated_value)  # Asignar el valor traducido
 
 
 class Languages(Base):
