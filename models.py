@@ -93,27 +93,20 @@ class AutoRelationshipMeta(DeclarativeMeta):
                         base_name,
                         make_translator(rel_name)
                     )
-    
-    def __new__(cls, name, bases, dct):
-        # Añadir la función 'iterate_attributes' a las clases que heredan de 'Base'
-        def iterate_attributes(self):
-            atts = {}
-            for attribute, value in vars(self).items():
-                print(f"Attribute: {attribute} - Value: {value}")
-                atts[attribute] = value
-            
-            return atts
-        
-        def iterate_functions(self):
-            # Obtener todos los métodos de la clase
-            functions = inspect.getmembers(cls, predicate=inspect.isfunction)
-            for function_name, function in functions:
-                print(f"Function: {function_name}, Function object: {function}")
+        def get_translated(self, lang: str = "Spanish"):
+            translations = {}
+            for column in class_mapper(self.__class__).columns:
+                # Verificar si la columna es una clave foránea a TextContent
+                if column.name.endswith('_id'):
+                    field_name = column.name.replace('_id', '')
+                    # Llamar a la función correspondiente a ese campo para obtener la traducción
+                    translated_value = getattr(self, field_name)(lang)
+                    translations[field_name] = translated_value
+            return translations
 
-        dct['iterate_attributes'] = iterate_attributes
-        dct['iterate_functions'] = iterate_functions
+        # Añadir el método get_translated a la clase
+        dct['get_translated'] = get_translated
 
-        
         return super().__new__(cls, name, bases, dct)
 
 # Base con el metaclase personalizado
