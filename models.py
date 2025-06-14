@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.declarative import declared_attr
 
 from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship, DeclarativeMeta
+from sqlalchemy.orm import relationship, DeclarativeMeta, Mapped
 from sqlalchemy.ext.declarative import declarative_base
 import inspect
 
@@ -23,21 +23,11 @@ class AutoRelationshipMeta(DeclarativeMeta):
 
                 if not col.foreign_keys:
                     continue
-
-                print("---------------------")
-
-                print(f"{cls.__table__.name=}")
-
-                print(f"{col.name=}")
                 
-                # Determinar nombre de la clase target a partir de la tabla referenciada
                 fk = next(iter(col.foreign_keys))
 
-                print(f"{fk=}")
+                target_table = fk.column.table.name  # e.g. 'text_content'
 
-                target_table = fk.column.table.name       # e.g. 'text_content'
-
-                print(f"{target_table=}")
 
                 if target_table != 'text_content':
                     continue
@@ -45,7 +35,6 @@ class AutoRelationshipMeta(DeclarativeMeta):
                 if cls.__table__.name == "translations":
                     continue
 
-                print("OK")
 
                 base_name = col.name[:-3]        # e.g. 'name_id' → 'name'
                 rel_name  = f"{base_name}_rel"   # e.g. 'name_rel'
@@ -76,13 +65,13 @@ class AutoRelationshipMeta(DeclarativeMeta):
 
                 if not hasattr(cls, base_name):
                     def make_translator(rn):
-                        def translator(self, lang: str = "Spanish"):
+                        def translator(self, lang: str = "es"):
                             rel_obj = getattr(self, rn)
                             if rel_obj is None:
                                 return None
                             # Buscar en las traducciones cargadas
                             for tr in rel_obj.translations:
-                                if tr.language.name == lang:
+                                if tr.language.code == lang:
                                     return tr.translation
                             # Fallback al texto original
                             return rel_obj.original_text
@@ -93,25 +82,10 @@ class AutoRelationshipMeta(DeclarativeMeta):
                         base_name,
                         make_translator(rel_name)
                     )
-        def get_translated(self, lang: str = "Spanish"):
-            translations = {}
-            for column in class_mapper(self.__class__).columns:
-                # Verificar si la columna es una clave foránea a TextContent
-                if column.name.endswith('_id'):
-                    field_name = column.name.replace('_id', '')
-                    # Llamar a la función correspondiente a ese campo para obtener la traducción
-                    translated_value = getattr(self, field_name)(lang)
-                    translations[field_name] = translated_value
-            return translations
-
-        # Añadir el método get_translated a la clase
-        dct['get_translated'] = get_translated
-
-        return super().__new__(cls, name, bases, dct)
 
 # Base con el metaclase personalizado
 Base = declarative_base(metaclass=AutoRelationshipMeta)
-from sqlalchemy.orm import Session, class_mapper
+from sqlalchemy.orm import Session, class_mapper, mapped_column
 from sqlalchemy.orm import relationship
 
 
@@ -119,6 +93,7 @@ class Languages(Base):
     __tablename__ = 'languages'
     id = Column(Integer, primary_key=True)
     name = Column(String(30), nullable=False)
+    code = Column(String(5), nullable=False)
 
 class TextContent(Base):
     __tablename__ = 'text_content'
@@ -129,7 +104,6 @@ class TextContent(Base):
     language = relationship('Languages')
     translations = relationship('Translations', back_populates='text_content')
 
-#Languages.texts = relationship('TextContent', back_populates='language')
 
 class Translations(Base):
     __tablename__ = 'translations'
@@ -141,57 +115,22 @@ class Translations(Base):
     language = relationship('Languages')
 
 
-
 class Products(Base):
     __tablename__ = 'products'
-    id = Column(Integer, primary_key=True)
-    name_id = Column(Integer, ForeignKey('text_content.id'), nullable=False)
-    description_id = Column(Integer, ForeignKey('text_content.id'), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name_id: Mapped[int] = mapped_column(ForeignKey('text_content.id'), nullable=False)
+    description_id: Mapped[int]= mapped_column(ForeignKey('text_content.id'), nullable=False)
 
-    def hello(self):
-        return "hola"
+    # Campos creados automáticamente
+    # name_rel = relationship(...)
+    # description_rel = relationship(...)
+    # (alias) name_original_text = name_rel.original_text
+    # (alias) description_original_text = description_rel.original_text
 
-    #def iterate_attributes(self):
-    #    # Itera sobre los atributos de la instancia de la clase
-    #    for attribute, value in vars(self).items():
-    #        print(f"{attribute}: {value}")
-        
-    
-    #name = relationship('TextContent', foreign_keys=[name_id])
-    #description = relationship('TextContent', foreign_keys=[description_id])
+    # Funciones creadas automáticamente
+    # name(lang: str) -> devuelve el name traducido al "lang" enviado
+    # description(lang: str) -> devuelve el description traducido al "lang" enviado
 
-    #def get_translated(self, db: Session, language: str):
-    #    """Devuelve el objeto traducido completo."""
-    #    
-    #    # Primero, iteramos sobre las relaciones
-    #    for column in class_mapper(self.__class__).relationships:
-    #        # column.key nos da el nombre del campo (por ejemplo, 'name', 'description', etc.)
-    #        field_name = column.key
-    #        field_value = getattr(self, field_name)
-#
-    #        # Si el campo es una relación con TextContent
-    #        if isinstance(field_value, TextContent):
-    #            # Renombramos el campo a <name>_rel
-    #            setattr(self, f"{field_name}_rel", field_value)
-    #            # Obtenemos la traducción de ese campo
-    #            translated_value = self.translate_field(db, field_name, language)
-    #            
-    #            # Creamos un nuevo objeto TextContent con el texto traducido y lo asignamos
-    #            translated_text_content = TextContent(original_text=translated_value)
-    #            setattr(self, field_name, translated_text_content)  # Asignamos el objeto TextContent traducido
-#
-    #    # Luego, iteramos sobre las columnas para procesar las claves foráneas (_id)
-    #    for column in class_mapper(self.__class__).columns:
-    #        # Si la columna es una clave foránea a TextContent (termina en '_id')
-    #        if column.name.endswith('_id'):
-    #            # Obtenemos el nombre del campo sin el sufijo '_id'
-    #            field_name = column.name.replace('_id', '')
-    #            field_value = getattr(self, f"{field_name}_rel", None)
-#
-    #            # Si encontramos la relación correspondiente, asignamos el texto traducido
-    #            if field_value:
-    #                # Asignamos el texto traducido del campo relacionado
-    #                translated_value = getattr(self, f"{field_name}_rel").original_text
-    #                setattr(self, field_name, translated_value)
-#
-    #    return self
+    # ATENCIÓN
+    # Solo se crean estos campos y funciones a las columnas que sean FK de text_content
+    # Es decir, que si tuvieses otro campos que apunte a otra tabla, la 'magia' no tendrá en cuenta y no creará ningún campo/funcion para esa columna (obviamente)
