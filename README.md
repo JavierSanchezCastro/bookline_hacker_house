@@ -189,3 +189,12 @@ def get_product_by_id(product_id: int, db: SessionDB, lang: Language):
 This setup allows the API to dynamically translate fields based on the `Accept-Language` header provided by the client, falling back to a default language if the header is missing or the specific translation isn't available.
 
 For more details on Pydantic validators and context, refer to the [Pydantic Documentation](https://docs.pydantic.dev/latest/concepts/validators/#beforeafter-validators_and_wrap-validators) and [Pydantic Validation Context](https://docs.pydantic.dev/latest/concepts/validators/#validation-context).
+
+## API Usage Examples (Screenshots)
+
+*(Space for API screenshots, request/response examples, or GIF demonstrations will be added here by the user.)*
+
+For example, you might include:
+*   A `curl` command or Postman screenshot showing a request to `/product/{product_id}` with an `Accept-Language: es` header and the corresponding Spanish response.
+*   A similar example with `Accept-Language: en` and the English response.
+*   An example of a request to `/multiple/product/{product_id}` showing all translations.
