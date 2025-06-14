@@ -190,6 +190,102 @@ This setup allows the API to dynamically translate fields based on the `Accept-L
 
 For more details on Pydantic validators and context, refer to the [Pydantic Documentation](https://docs.pydantic.dev/latest/concepts/validators/#beforeafter-validators_and_wrap-validators) and [Pydantic Validation Context](https://docs.pydantic.dev/latest/concepts/validators/#validation-context).
 
+### Fetching Multiple Translations: The `/multiple/product/{product_id}` Endpoint
+
+Beyond fetching a single translation based on the `Accept-Language` header, the API provides an endpoint to retrieve a product with multiple, or even all, of its available translations for name and description.
+
+**Endpoint:** `GET /multiple/product/{product_id}`
+
+**Default Behavior:**
+By default, this endpoint returns the product with all available translations for its name and description. The `Accept-Language` header is ignored for this endpoint in its default mode.
+
+Example Response Structure (default, all translations):
+```json
+{
+  "name": {
+    "original_text": "Caesar Salad", // Assuming original is English for this example
+    "translations": [
+      {
+        "language": {
+          "name": "Spanish",
+          "code": "es" // Assuming 'code' is now part of LanguageShow
+        },
+        "translation": "Ensalada César"
+      },
+      {
+        "language": {
+          "name": "French",
+          "code": "fr"
+        },
+        "translation": "Salade César"
+      },
+      // ... other languages ...
+    ]
+  },
+  "description": {
+    "original_text": "A classic Caesar salad.",
+    "translations": [
+      {
+        "language": {
+          "name": "Spanish",
+          "code": "es"
+        },
+        "translation": "Una ensalada César clásica."
+      },
+      // ... other languages for description ...
+    ]
+  }
+}
+```
+
+**Filtering Translations with `langs` Query Parameter:**
+You can specify which language translations you want to retrieve by using the `langs` query parameter. This parameter accepts a comma-separated list of language codes.
+
+*   **Example Request:** `GET /multiple/product/1?langs=es,fr`
+    This request will fetch product `1` and include only the Spanish ("es") and French ("fr") translations for its name and description, if they exist. The original text for each field will always be included.
+
+*   **Example Response Structure (with `?langs=es,fr`):**
+    ```json
+    {
+      "name": {
+        "original_text": "Caesar Salad",
+        "translations": [
+          {
+            "language": {
+              "name": "Spanish",
+              "code": "es"
+            },
+            "translation": "Ensalada César"
+          },
+          {
+            "language": {
+              "name": "French",
+              "code": "fr"
+            },
+            "translation": "Salade César"
+          }
+        ]
+      },
+      "description": {
+        "original_text": "A classic Caesar salad.",
+        "translations": [
+          {
+            "language": {
+              "name": "Spanish",
+              "code": "es"
+            },
+            "translation": "Una ensalada César clásica."
+          }
+          // Assuming no French translation for description, or it wasn't requested/available
+        ]
+      }
+    }
+    ```
+
+If a requested language via the `langs` parameter does not have a translation for a particular field, it will simply be omitted from the `translations` list for that field. If the `langs` parameter is empty or not provided, all available translations are returned as per the default behavior.
+
+This feature is useful when you need to display a product in multiple specific languages simultaneously, rather than just one based on user context.
+
 ## API Usage Examples (Screenshots)
 
 *(Space for API screenshots, request/response examples, or GIF demonstrations will be added here by the user.)*

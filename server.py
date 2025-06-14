@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Query
 from sqlalchemy.orm import Session
 from typing import Optional, Annotated
 from sqlalchemy import create_engine
@@ -65,11 +65,25 @@ def get_product_by_id(product_id: int, db: SessionDB, lang: Language):
     product = ProductShow.model_validate(product, context={"lang": lang})
     return product
 
-@app.get("/multiple/product/{product_id}", response_model=ProductShowMultipleTranslation, description="Aquí Accept-Language no se tiene en cuenta, devuelve todas las traducciones")
-def get_product_by_id_multiple(product_id: int, db: SessionDB, lang: Language):
+@app.get("/multiple/product/{product_id}", response_model=ProductShowMultipleTranslation, description="Returns all translations by default, or filters by 'langs' query parameter.")
+def get_product_by_id_multiple(
+    product_id: int,
+    db: SessionDB,
+    langs: Optional[str] = Query(
+        None,
+        description="Comma-separated language codes (e.g., 'es,en') to filter translations. Returns all if not provided.",
+        alias="langs" # Ensure the query parameter is recognized as 'langs'
+    )
+):
     product = db.query(Products).filter(Products.id == product_id).first()
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    return product
+    parsed_langs_list = None
+    if langs:
+        parsed_langs_list = [lang.strip() for lang in langs.split(',') if lang.strip()]
+
+    # Pass the list of target languages in the context
+    # The Pydantic models (TextContentShow) will use this context to filter translations
+    return ProductShowMultipleTranslation.model_validate(product, context={"target_langs": parsed_langs_list})
