@@ -103,11 +103,11 @@ When a model uses `Base` (which itself uses `AutoRelationshipMeta`), the metacla
 The comments in the `Products` class in `models.py` summarize this behavior:
 
 ```python
-# class Products(Base):
-#     __tablename__ = 'products'
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     name_id: Mapped[int] = mapped_column(ForeignKey('text_content.id'), nullable=False)
-#     description_id: Mapped[int]= mapped_column(ForeignKey('text_content.id'), nullable=False)
+class Products(Base):
+    __tablename__ = 'products'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name_id: Mapped[int] = mapped_column(ForeignKey('text_content.id'), nullable=False)
+    description_id: Mapped[int]= mapped_column(ForeignKey('text_content.id'), nullable=False)
 
     # Campos creados automáticamente
     # name_rel = relationship(...)
@@ -192,9 +192,7 @@ For more details on Pydantic validators and context, refer to the [Pydantic Docu
 
 ## API Usage Examples (Screenshots)
 
-*(Space for API screenshots, request/response examples, or GIF demonstrations will be added here by the user.)*
+Examples: 
+![alt text](./img1.png)
+![alt text](./img2.png)
 
-For example, you might include:
-*   A `curl` command or Postman screenshot showing a request to `/product/{product_id}` with an `Accept-Language: es` header and the corresponding Spanish response.
-*   A similar example with `Accept-Language: en` and the English response.
-*   An example of a request to `/multiple/product/{product_id}` showing all translations.

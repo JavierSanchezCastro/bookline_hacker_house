@@ -22,10 +22,10 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Crear idiomas
-spanish = Languages(name="Spanish")
-catalan = Languages(name="Catalan")
-english = Languages(name="English")
-french = Languages(name="French")
+spanish = Languages(name="Spanish", code="es")
+catalan = Languages(name="Catalan", code="ca")
+english = Languages(name="English", code="en")
+french = Languages(name="French", code="fr")
 
 # Agregar idiomas a la sesión antes de los TextContent
 session.add(spanish)
@@ -52,7 +52,7 @@ products = [
 for product in products:
     # Crear TextContent en español
     text_spanish = TextContent(original_text=product["es"], original_language_id=spanish.id)
-    text_spanish_desc = TextContent(original_text=f"Desc: {product["es"]}", original_language_id=spanish.id)
+    text_spanish_desc = TextContent(original_text=f"Desc: {product['es']}", original_language_id=spanish.id)
     session.add(text_spanish)
     session.add(text_spanish_desc)
     session.commit()
@@ -62,9 +62,9 @@ for product in products:
     translation_en = Translations(text_content_id=text_spanish.id, language_id=english.id, translation=product["en"])
     translation_fr = Translations(text_content_id=text_spanish.id, language_id=french.id, translation=product["fr"])
 
-    translation_desc_ca = Translations(text_content_id=text_spanish_desc.id, language_id=catalan.id, translation=f"Desc: {product["ca"]}")
-    translation_desc_en = Translations(text_content_id=text_spanish_desc.id, language_id=english.id, translation=f"Desc: {product["en"]}")
-    translation_desc_fr = Translations(text_content_id=text_spanish_desc.id, language_id=french.id, translation=f"Desc: {product["fr"]}")
+    translation_desc_ca = Translations(text_content_id=text_spanish_desc.id, language_id=catalan.id, translation=f"Desc: {product['ca']}")
+    translation_desc_en = Translations(text_content_id=text_spanish_desc.id, language_id=english.id, translation=f"Desc: {product['en']}")
+    translation_desc_fr = Translations(text_content_id=text_spanish_desc.id, language_id=french.id, translation=f"Desc: {product['fr']}")
     
     # Crear un producto
     product_entry = Products(name_id=text_spanish.id, description_id=text_spanish_desc.id)
@@ -89,7 +89,7 @@ print("Productos en español:")
 products_in_spanish = session.query(Products).join(TextContent, TextContent.id == Products.name_id).join(Languages).filter(Languages.name == "Spanish").all()
 
 for product in products_in_spanish:
-    print(f"- {product.name("Spanish")}")
+    print(f"- {product.name('Spanish')}")
 
 print("\nTraducciones para 'Ensalada César':")
 # Consultar las traducciones de un producto específico
