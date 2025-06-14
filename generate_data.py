@@ -3,7 +3,12 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.declarative import declared_attr
 from models import Base, Languages, TextContent, Translations, Products
 # Connecting to an SQLite database (or any other database URL)
-engine = create_engine("mysql+pymysql://user:1234@localhost:3307/test")
+# engine = create_engine("mysql+pymysql://user:1234@localhost:3307/test") # Old URL
+# For Docker, 'db' is the hostname of the MySQL service.
+# For local execution outside Docker, this would need to be 'localhost' or 127.0.0.1
+engine = create_engine("mysql+pymysql://user:1234@db:3306/test")
+# Note: The port in docker-compose for mysql is 3306 internally, 3307 is the host mapping.
+# The service 'db' is accessible on port 3306 from within the Docker network.
 
 Base.metadata.create_all(engine)
 

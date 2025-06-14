@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException, Depends, Header
 from sqlalchemy.orm import Session
 from typing import Optional, Annotated
@@ -7,7 +8,8 @@ from models import Products, TextContent, Languages, Translations
 from utils import ProductShow, ProductShowMultipleTranslation
 
 # Configuración de la base de datos
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:1234@localhost:3307/test"
+#SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:1234@localhost:3307/test" # Old URL
+SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "mysql+pymysql://user:1234@localhost:3307/test")
 
 # Crear motor y sesión
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
