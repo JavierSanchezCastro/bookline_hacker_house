@@ -29,5 +29,17 @@ services:
     environment:
       DATABASE_URL: mysql+pymysql://user:1234@db:3306/test
 
+  reflex_ui:
+    build: .
+    container_name: reflex_ui_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: reflex run --host 0.0.0.0 --frontend-port 3000 --backend-port 8001
+    depends_on:
+      - api
+
 volumes:
   mysql_data:

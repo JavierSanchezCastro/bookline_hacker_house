@@ -10,7 +10,7 @@ class TranslationState(rx.State):
         """Fetches all translations from the FastAPI backend."""
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get("http://localhost:8000/all_translations")
+                    response = await client.get("http://api:8000/all_translations")
                 response.raise_for_status()  # Raise an exception for bad status codes
                 raw_data = response.json()
                 processed_data = []
