@@ -1,11 +1,11 @@
 import os
 from fastapi import FastAPI, HTTPException, Depends, Header
 from sqlalchemy.orm import Session
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Products, TextContent, Languages, Translations
-from utils import ProductShow, ProductShowMultipleTranslation
+from utils import ProductShow, ProductShowMultipleTranslation, TextContentWithTranslations, TranslationDetail
 
 # Configuración de la base de datos
 #SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:1234@localhost:3307/test" # Old URL
@@ -73,3 +73,14 @@ def get_product_by_id_multiple(product_id: int, db: SessionDB, lang: Language):
         raise HTTPException(status_code=404, detail="Product not found")
     
     return product
+
+@app.get("/all_translations", response_model=List[TextContentWithTranslations])
+def get_all_translations(db: SessionDB):
+    text_contents = db.query(TextContent).all()
+    response = []
+    for tc in text_contents:
+        translations = []
+        for t in tc.translations:
+            translations.append(TranslationDetail(language_code=t.language.name, translation=t.translation))
+        response.append(TextContentWithTranslations(original_text=tc.original_text, translations=translations))
+    return response

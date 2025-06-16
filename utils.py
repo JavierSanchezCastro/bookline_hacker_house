@@ -26,3 +26,11 @@ class ProductShowMultipleTranslation(BaseModel):
     name_rel: Annotated[TextContentShow, Field(serialization_alias="name")]
     description_rel: Annotated[TextContentShow, Field(serialization_alias="description")]
     model_config = ConfigDict(from_attributes=True)
+
+class TranslationDetail(BaseModel):
+    language_code: str
+    translation: str
+
+class TextContentWithTranslations(BaseModel):
+    original_text: str
+    translations: list[TranslationDetail]

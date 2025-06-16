@@ -4,3 +4,5 @@ SQLAlchemy
 PyMySQL
 pydantic
 cryptography
+reflex
+httpx
