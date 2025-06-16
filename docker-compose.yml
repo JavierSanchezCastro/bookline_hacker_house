@@ -37,7 +37,7 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
-    command: reflex run --frontend-host 0.0.0.0 --backend-host 0.0.0.0 --frontend-port 3000 --backend-port 8001
+    command: reflex run --backend-host 0.0.0.0 --frontend-port 3000 --backend-port 8001
     depends_on:
       - api
 
